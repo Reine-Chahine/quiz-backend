@@ -7,6 +7,9 @@ $title = $data['title'];
 $description = $data['description'];
 
 $sql = "UPDATE quizzes SET title='$title', description='$description' WHERE quiz_id='$quiz_id'";
-
-
+if (mysqli_query($conn, $sql)) {
+    echo json_encode(["message" => "Quiz updated successfully"]);
+} else {
+    echo json_encode(["message" => "Quiz update failed"]);
+}
 ?>
