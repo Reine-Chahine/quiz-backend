@@ -1,14 +1,24 @@
 <?php
 include 'connection.php';
 
-$data = json_decode(file_get_contents("php://input"), true);
-$ques_id = $data['ques_id'];
+header('Content-Type: application/json');
 
-$sql = "DELETE FROM questions WHERE ques_id='$ques_id'";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $ques_id = mysqli_real_escape_string($conn, $_POST['ques_id'] ?? '');
 
-if (mysqli_query($conn, $sql)) {
-    echo json_encode(["message" => "Question deleted successfully"]);
+    if (!$ques_id) {
+        echo json_encode(["message" => "Missing question ID"]);
+        exit;
+    }
+
+    $sql = "DELETE FROM questions WHERE ques_id='$ques_id'";
+
+    if (mysqli_query($conn, $sql)) {
+        echo json_encode(["message" => "Question deleted successfully"]);
+    } else {
+        echo json_encode(["message" => "Question deletion failed"]);
+    }
 } else {
-    echo json_encode(["message" => "Question deletion failed"]);
+    echo json_encode(["message" => "Invalid request method"]);
 }
 ?>
