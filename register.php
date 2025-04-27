@@ -1,17 +1,41 @@
 <?php
-include 'connection.php'; 
+include 'connection.php';
 
-$data = json_decode(file_get_contents("php://input"), true);
-$username = $data['username'];
-$password = password_hash($data['password'], PASSWORD_DEFAULT);
-$email = $data['email'];
+header('Content-Type: application/json');
 
-$sql = "INSERT INTO Users (username, password, email, create_time, is_admin) 
-        VALUES ('$username', '$password', '$email', NOW(), 0)";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+   
+    $username = $_POST['username'] ?? null;
+    $password = $_POST['password'] ?? null;
 
-if (mysqli_query($conn, $sql)) {
-    echo json_encode(["message" => "User registered successfully."]);
+   
+    if (!$username || !$password) {
+        echo json_encode(["message" => "Missing username or password"]);
+        exit;
+    }
+
+
+    $stmt = $conn->prepare("SELECT * FROM Users WHERE username = ?");
+    $stmt->bind_param("s", $username);  
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($row = mysqli_fetch_assoc($result)) {
+  
+        if (password_verify($password, $row['password'])) {
+            
+            $isAdmin = $row['is_admin'] == 1 ? 1 : 0;
+            echo json_encode([
+                "message" => "Login successful",
+                "user_id" => $row['user_id'],
+                "admin" => $isAdmin
+            ]);
+        } else {
+            echo json_encode(["message" => "Invalid password"]);
+        }
+    } else {
+        echo json_encode(["message" => "User not found"]);
+    }
 } else {
-    echo json_encode(["message" => "Registration failed."]);
-}
-?>
+    echo json_encode(["message" => "Invalid request method"]);
+}?>
